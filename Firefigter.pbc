@@ -1,0 +1,167 @@
+'****************************************************************
+'*  Name    : FIREFIGHTER.BAS                                   *
+'*  Author  : Devansh and Harshil                               *
+'*  Notice  : Copyright (c) 2016 [select VIEW...EDITOR OPTIONS] *
+'*          : All Rights Reserved                               *
+'*  Date    : 6/8/2016                                          *
+'*  Version : 1.0                                               *
+'*  Notes   :                                                   *
+'*          :                                                   *
+'****************************************************************
+'DEFINE STATEMENTS
+DEFINE ADC_BITS 8
+DEFINE ADC_CLOCK 3
+DEFINE ADC_SAMPLEUS 50
+DEFINE LCD_DREG PORTD
+DEFINE LCD_DBIT 4
+DEFINE LCD_RSREG PORTD
+DEFINE LCD_RSBIT 0
+DEFINE LCD_EREG PORTD
+DEFINE LCD_EBIT 2
+DEFINE LCD_RWREG PORTD
+DEFINE LCD_RWBIT 1
+DEFINE LCD_BITS 4
+DEFINE LCD_LINES 2
+DEFINE LCD_COMMANDUS 2000
+DEFINE LCD_DATAUS 50
+DEFINE LOADER_USED 1
+DEFINE OSC 20
+
+'INITIALIZATION OF VAR
+roomNumber VAR BYTE
+onLine VAR BYTE
+addVal VAR BYTE
+flameVal VAR BYTE
+pickVal VAR BYTE
+frontsensor VAR BYTE
+leftsensor VAR BYTE
+
+'SETTING PORTS
+TRISA = %11111111
+TRISB = %00000000
+
+'SETTING VAR
+onLine = 0
+
+'MAIN LOOP
+main:
+
+'INPUT PINS
+ADCIN 0, addVal
+ADCIN 1, flameVal
+ADCIN 2, pickVal
+
+'FRONT/LEFT SENSOR VALUES
+frontsensor=((6787/(addVal-3))-4)/5
+leftsensor=((6787/(pickVal-3))-4)/5
+
+'OUTPUTTING FLAME AND WALL SENSOR VALUES TO LCD
+LCDOUT $FE, 1, "F: ", #flameVal
+LCDOUT $FE, $c0, "WF: ", #frontsensor, "  WL: ", #leftsensor
+pause 10
+
+'DETECTS LINE AND ADDS ONE
+'THIS IS BECAUSE THE ROBOT HAS ENTERED A ROOM
+IF portb.3 = 0 THEN
+ onLine = onLine + 1
+ENDIF 
+
+'DO THE MOVEMENTS TO GET INTO ROOM 4
+IF onLine = 6 THEN
+ GOSUB STRAIGHT
+ PAUSE 100
+ GOSUB LEFT
+ PAUSE 200
+ GOSUB STRAIGHT
+ PAUSE 400
+ GOSUB LEFT
+ PAUSE 200
+ onLine = 7                               
+ENDIF 
+
+'IF FLAME IS DETECTED MOVE TO IT AND EXTINGUISH IT
+IF flameVal <= 150 then
+  portb.2 = 1
+  GOSUB STRAIGHT
+  PAUSE 100
+  GOSUB DONT
+endif
+
+'IF FLAME IS NOT DETECTED TURN OFF FAN
+IF flameVal > 150 THEN
+  portb.2 = 0
+ENDIF
+
+
+'IF FRONT WALL IS 15 CM AWAY TURN RIGHT
+IF frontsensor <= 15 THEN
+ GOSUB RIGHT
+ PAUSE 200
+ GOTO main
+ENDIF
+
+'IF LEFT WALL IS IN BETWEEN 11 AND 20 CM GO STRAIGHT
+IF leftsensor >= 11 and leftsensor <= 20 THEN
+ GOSUB STRAIGHT
+ENDIF
+
+'CORRECTION STATEMENT: IF LEFT WALL IS LESS THAN OR EQUAL TO 10 CM GO RIGHT
+IF leftsensor <= 10 THEN
+ GOSUB RIGHT
+ PAUSE 50
+ gosub straight
+ENDIF
+
+'CORRECTION STATEMENT: IF LEFT WALL IS IN BETWEEN 25 AND 30 CM GO LEFT
+IF leftsensor >= 25 AND leftsensor <= 30 THEN
+ GOSUB LEFT
+ PAUSE 75
+ENDIF 
+
+'IF LEFT WALL IS GREATER THAN 30 CM TURN LEFT
+IF leftsensor > 30 THEN
+  GOSUB STRAIGHT
+  PAUSE 50
+  GOSUB LEFT
+  PAUSE 30
+ENDIF
+
+goto main
+
+'MOTORS GO STRAIGHT
+STRAIGHT:                                                                                                                             
+portb.4=0
+portb.5=1
+
+portb.6=1
+portb.7=0
+RETURN
+
+'MOTORS GO LEFT
+LEFT:
+portb.4=1
+portb.5=0
+
+portb.6=1
+portb.7=0
+RETURN
+
+'MOTORS GO RIGHT
+RIGHT:
+portb.4=0
+portb.5=1
+
+portb.6=0
+portb.7=1
+RETURN
+
+'MOTORS TURN OFF
+DONT:
+portb.4=0
+portb.5=0
+
+portb.6=0
+portb.7=0
+PAUSE 7000
+RETURN
+
