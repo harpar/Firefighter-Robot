@@ -1,5 +1,7 @@
 # Firefigter Robot
 
+For detailed description of the Firefighter Robot visit [here](https://docs.google.com/document/d/17wX7qjHvK7LsGAUOOBVbU6jCcYASRq41cAAVSWKefpM/edit?usp=sharing).
+
 ![PCB Board](PCB.png?raw=true "PCB Schematic")
 
 ![Right View](right.jpg?raw=true "Right View")
